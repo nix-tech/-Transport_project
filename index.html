@@ -14,6 +14,11 @@
 
     <!-- Supabase JS SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- EmailJS — Notifications email admin -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+    <!-- FontAwesome for Real Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <link rel="stylesheet" href="css/style.css">
 </head>
@@ -116,6 +121,7 @@
                 <button id="nav-guest" class="btn-nav-login" onclick="openAuthModal()">LOGIN</button>
                 <div id="nav-user" class="hidden nav-user-info">
                     <span id="user-display-name">User</span>
+                    <button id="btn-admin-nav" class="btn-nav-admin hidden" onclick="showView('view-admin')">ADMIN</button>
                     <button class="btn-nav-logout" onclick="handleSignOut()">LOGOUT</button>
                 </div>
             </div>
@@ -131,11 +137,11 @@
         <div id="view-home">
             <!-- Hero Slider -->
             <section class="hero">
-                <div class="hero-image"
-                    style="background-image: url('https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80&w=1920');">
+                <div class="hero-image" id="hero-img"
+                    style="background-image: url('https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80&w=1920'); transition: background-image 0.5s ease-in-out;">
                 </div>
                 <div class="container hero-content">
-                    <div class="slider-arrow arrow-left">
+                    <div class="slider-arrow arrow-left" onclick="prevSlide()">
                         <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2"
                             fill="none">
                             <polyline points="15 18 9 12 15 6"></polyline>
@@ -150,7 +156,7 @@
                             More</button>
                     </div>
 
-                    <div class="slider-arrow arrow-right">
+                    <div class="slider-arrow arrow-right" onclick="nextSlide()">
                         <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2"
                             fill="none">
                             <polyline points="9 18 15 12 9 6"></polyline>
@@ -158,9 +164,9 @@
                     </div>
                 </div>
                 <div class="slider-dots">
-                    <div class="dot active"></div>
-                    <div class="dot"></div>
-                    <div class="dot"></div>
+                    <div class="dot active" id="dot-0" onclick="goToSlide(0)"></div>
+                    <div class="dot" id="dot-1" onclick="goToSlide(1)"></div>
+                    <div class="dot" id="dot-2" onclick="goToSlide(2)"></div>
                 </div>
             </section>
 
@@ -501,6 +507,105 @@
             </section>
         </div>
 
+        <!-- ========================================================== -->
+        <!-- VIEW: ADMIN DASHBOARD                                       -->
+        <!-- ========================================================== -->
+        <div id="view-admin" class="hidden">
+            <section class="booking-section">
+                <div class="container">
+
+                    <div class="results-header">
+                        <h2 class="section-heading">TABLEAU DE BORD</h2>
+                        <button onclick="goHome()" class="btn-read-more-cyan" style="margin-top:0;">← Accueil</button>
+                    </div>
+
+                    <!-- Stats -->
+                    <div class="adm-stats">
+                        <div class="adm-stat">
+                            <div class="adm-num" id="a-stat-bookings">—</div>
+                            <div class="adm-lbl">RÉSERVATIONS</div>
+                        </div>
+                        <div class="adm-stat">
+                            <div class="adm-num" id="a-stat-charters">—</div>
+                            <div class="adm-lbl">CHARTER</div>
+                        </div>
+                        <div class="adm-stat">
+                            <div class="adm-num" id="a-stat-approved">—</div>
+                            <div class="adm-lbl">APPROUVÉS</div>
+                        </div>
+                        <div class="adm-stat adm-warn">
+                            <div class="adm-num" id="a-stat-pending">—</div>
+                            <div class="adm-lbl">EN ATTENTE</div>
+                        </div>
+                    </div>
+
+                    <!-- Tab Bar -->
+                    <div class="adm-tab-bar">
+                        <button class="adm-tab active" id="atab-book" onclick="switchAdminTab('bookings')"><i class="fa-solid fa-ticket-simple" style="margin-right: 6px;"></i> RÉSERVATIONS</button>
+                        <button class="adm-tab" id="atab-charter" onclick="switchAdminTab('charters')"><i class="fa-solid fa-bus" style="margin-right: 6px;"></i> CHARTER</button>
+                    </div>
+
+                    <!-- Bookings Panel -->
+                    <div id="adm-panel-bookings">
+                        <div class="adm-search">
+                            <input type="text" id="a-search-bookings" class="form-input"
+                                style="max-width:320px;margin-bottom:14px;"
+                                placeholder="Rechercher nom, email, code..."
+                                oninput="filterAdminBookings()">
+                        </div>
+                        <div class="adm-table-wrap">
+                            <table class="adm-table">
+                                <thead>
+                                    <tr>
+                                        <th>CLIENT</th>
+                                        <th>TRAJET</th>
+                                        <th>SIÈGE</th>
+                                        <th>CODE</th>
+                                        <th>DATE</th>
+                                        <th>STATUT</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="a-bookings-body">
+                                    <tr><td colspan="6" class="adm-empty">Chargement...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Charters Panel -->
+                    <div id="adm-panel-charters" class="hidden">
+                        <div class="adm-search">
+                            <input type="text" id="a-search-charters" class="form-input"
+                                style="max-width:320px;margin-bottom:14px;"
+                                placeholder="Rechercher nom, email, objet..."
+                                oninput="filterAdminCharters()">
+                        </div>
+                        <div class="adm-table-wrap">
+                            <table class="adm-table">
+                                <thead>
+                                    <tr>
+                                        <th>CLIENT</th>
+                                        <th>TÉLÉPHONE</th>
+                                        <th>OBJET</th>
+                                        <th>DATE ÉVT.</th>
+                                        <th>NOTES</th>
+                                        <th>STATUT</th>
+                                        <th>ACTIONS</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="a-charters-body">
+                                    <tr><td colspan="7" class="adm-empty">Chargement...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+        </div>
+
+    </div>
+
     </div>
 
     <!-- ========================================================== -->
@@ -556,6 +661,134 @@
             </div>
         </div>
     </footer>
+
+    <!-- Admin CSS -->
+    <style>
+        /* ── Stats ── */
+        .adm-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-top: 30px;
+            margin-bottom: 28px;
+        }
+        @media (max-width: 700px) { .adm-stats { grid-template-columns: repeat(2, 1fr); } }
+
+        .adm-stat {
+            background: #fff;
+            border: 1px solid #dde4ed;
+            border-radius: 0;
+            padding: 18px 14px;
+            text-align: center;
+        }
+        .adm-stat.adm-warn .adm-num { color: #f59e0b; }
+
+        .adm-num { font-size: 28px; font-weight: 800; color: #00aeef; line-height: 1; margin-bottom: 6px; }
+        .adm-lbl { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: #888; }
+
+        /* ── Tabs ── */
+        .adm-tab-bar { display: flex; border-bottom: 2px solid #dde4ed; margin-bottom: 20px; }
+
+        .adm-tab {
+            padding: 11px 24px;
+            background: none; border: none;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+            color: #aaa; cursor: pointer;
+            border-bottom: 2px solid transparent; margin-bottom: -2px;
+            transition: all .2s;
+        }
+        .adm-tab.active { color: #00aeef; border-bottom-color: #00aeef; }
+        .adm-tab:hover  { color: #00aeef; }
+
+        /* ── Search ── */
+        .adm-search { margin-bottom: 0; }
+
+        /* ── Table ── */
+        .adm-table-wrap { overflow-x: auto; border: 1px solid #dde4ed; border-radius: 5px; margin-bottom: 30px; }
+        .adm-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .adm-table th {
+            padding: 10px 14px; text-align: left;
+            font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+            color: #888; background: #f7f9fb;
+            border-bottom: 1px solid #dde4ed; white-space: nowrap;
+        }
+        .adm-table td { padding: 13px 14px; border-bottom: 1px solid #f0f3f7; vertical-align: middle; }
+        .adm-table tr:last-child td { border-bottom: none; }
+        .adm-table tr:hover td { background: #fafcff; }
+
+        .adm-name  { font-weight: 600; color: #222; }
+        .adm-email { font-size: 12px; color: #888; }
+        .adm-phone { font-size: 12px; color: #00aeef; font-weight: 600; }
+
+        .adm-code {
+            font-family: 'Courier New', monospace; font-size: 11px;
+            background: #eef6ff; padding: 3px 8px;
+            border-radius: 4px; color: #007bb5; letter-spacing: 1px;
+        }
+
+        .adm-route {
+            display: inline-block;
+            background: rgba(0,174,239,.08);
+            border: 1px solid rgba(0,174,239,.2);
+            padding: 3px 10px; border-radius: 20px;
+            font-size: 11px; font-weight: 600; color: #00aeef;
+        }
+
+        .adm-badge {
+            display: inline-block; padding: 3px 10px;
+            border-radius: 20px; font-size: 10px;
+            font-weight: 700; letter-spacing: .5px;
+        }
+        .adm-badge.confirmed, .adm-badge.approved { background: #dcfce7; color: #16a34a; }
+        .adm-badge.pending   { background: #fef9c3; color: #b45309; }
+        .adm-badge.rejected, .adm-badge.cancelled { background: #fee2e2; color: #dc2626; }
+
+        .adm-acts { display: flex; gap: 6px; }
+        .adm-btn-ok, .adm-btn-no {
+            padding: 5px 11px; border-radius: 4px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 10px; font-weight: 700; cursor: pointer;
+            transition: background .15s; letter-spacing: .5px;
+        }
+        .adm-btn-ok { background: #dcfce7; color: #16a34a; border: 1px solid #86efac; }
+        .adm-btn-ok:hover { background: #bbf7d0; }
+        .adm-btn-no { background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; }
+        .adm-btn-no:hover { background: #fecaca; }
+        .adm-btn-ok:disabled, .adm-btn-no:disabled { opacity: .4; cursor: not-allowed; }
+
+        .adm-empty { text-align: center; padding: 32px; color: #aaa; font-size: 13px; }
+
+        /* ── Admin nav button ── */
+        .btn-nav-admin {
+            background: #00aeef; color: #fff; border: none;
+            padding: 6px 14px; font-family: 'Montserrat', sans-serif;
+            font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+            cursor: pointer; border-radius: 3px; margin-right: 8px;
+            transition: background .2s;
+        }
+        .btn-nav-admin:hover { background: #0094cc; }
+    </style>
+
+    <!-- ========================================================== -->
+    <!-- PAYMENT MODAL                                              -->
+    <!-- ========================================================== -->
+    <div id="payment-backdrop" class="modal-backdrop hidden">
+        <div class="modal" style="max-width: 450px;">
+            <button id="payment-modal-close" class="modal-close">×</button>
+            <h2 class="modal-title">SECURE PAYMENT</h2>
+            <div id="payment-details" style="margin-bottom: 20px; text-align: center; font-size: 14px; font-weight: 500; color: #555;"></div>
+            <form id="payment-form">
+                <input type="text" class="modal-input" placeholder="Card Number (e.g. 4242 4242 4242 4242)" required pattern="[\d\s]{13,19}">
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" class="modal-input" placeholder="MM/YY" required pattern="\d\d/\d\d">
+                    <input type="text" class="modal-input" placeholder="CVC" required pattern="\d{3,4}">
+                </div>
+                <input type="text" class="modal-input" placeholder="Cardholder Name" required>
+                <button type="submit" id="btn-pay-now" class="modal-btn" style="background: #22c55e;">PAY NOW</button>
+            </form>
+        </div>
+    </div>
 
     <!-- Scripts -->
     <script src="js/config.js"></script>

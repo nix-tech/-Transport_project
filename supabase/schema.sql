@@ -178,6 +178,32 @@ CREATE POLICY "charter_insert_auth"
     ON public.charter_requests FOR INSERT
     WITH CHECK (auth.uid() = user_id);
 
+-- Utilisateur normal voit ses propres demandes; Admin voit tout
 CREATE POLICY "charter_select_own"
     ON public.charter_requests FOR SELECT
-    USING (auth.uid() = user_id);
+    USING (
+        auth.uid() = user_id
+        OR auth.email() = 'nixnithersaintval@gmail.com'
+    );
+
+-- ============================================================
+-- POLITIQUES ADMIN (nixnithersaintval@gmail.com)
+-- ============================================================
+
+-- Admin peut mettre à jour le statut des demandes charter
+CREATE POLICY "charter_update_admin"
+    ON public.charter_requests FOR UPDATE
+    USING (auth.email() = 'nixnithersaintval@gmail.com')
+    WITH CHECK (auth.email() = 'nixnithersaintval@gmail.com');
+
+-- Admin peut voir toutes les réservations (bookings déjà publics via bookings_select_seat_check)
+-- Si vous avez restreint les bookings, ajoutez cette policy :
+-- CREATE POLICY "bookings_select_admin"
+--     ON public.bookings FOR SELECT
+--     USING (auth.email() = 'nixnithersaintval@gmail.com');
+
+-- ============================================================
+-- TABLE: admin_notes (optionnel — notes internes admin)
+-- ============================================================
+-- Si besoin d'ajouter une colonne notes à charter_requests :
+-- ALTER TABLE public.charter_requests ADD COLUMN IF NOT EXISTS admin_notes TEXT;

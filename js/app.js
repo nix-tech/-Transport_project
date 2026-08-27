@@ -17,6 +17,95 @@ const state = {
 const $ = (id) => document.getElementById(id);
 
 // ============================================================
+// EMAILJS — Notifications Admin
+// ============================================================
+// Créez un compte GRATUIT sur https://emailjs.com puis :
+//  1. Créez un service email (Gmail)
+//  2. Créez un template avec les variables ci-dessous
+//  3. Copiez vos IDs ici
+const EMAILJS_SERVICE_ID  = 'YOUR_SERVICE_ID';   // ex: 'service_abc123'
+const EMAILJS_TEMPLATE_BOOKING  = 'YOUR_BOOKING_TEMPLATE_ID'; // ex: 'template_abc123'
+const EMAILJS_TEMPLATE_CHARTER  = 'YOUR_CHARTER_TEMPLATE_ID'; // ex: 'template_xyz456'
+const EMAILJS_PUBLIC_KEY  = 'YOUR_PUBLIC_KEY';   // ex: 'aBcDeFgHiJkLmN'
+const ADMIN_EMAIL_DEST    = 'nixnithersaintval@gmail.com';
+
+// Initialise EmailJS avec votre clé publique
+if (typeof emailjs !== 'undefined' && EMAILJS_PUBLIC_KEY !== 'YOUR_PUBLIC_KEY') {
+    emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+}
+
+/**
+ * Envoie une notification email à l'administrateur.
+ * @param {string} templateId - ID du template EmailJS
+ * @param {Object} params     - Variables du template
+ */
+async function sendAdminEmail(templateId, params) {
+    if (typeof emailjs === 'undefined') return;
+    if (EMAILJS_PUBLIC_KEY === 'YOUR_PUBLIC_KEY') {
+        console.warn('[EmailJS] Clés non configurées. Configurez EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_* et EMAILJS_PUBLIC_KEY dans app.js');
+        return;
+    }
+    try {
+        await emailjs.send(EMAILJS_SERVICE_ID, templateId, {
+            to_email: ADMIN_EMAIL_DEST,
+            ...params
+        });
+        console.log('[EmailJS] Email envoyé avec succès.');
+    } catch (err) {
+        console.warn('[EmailJS] Erreur envoi email:', err);
+    }
+}
+
+// ============================================================
+// CAROUSEL LOGIC
+// ============================================================
+const heroImages = [
+    'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80&w=1920', // Bus 1
+    'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?auto=format&fit=crop&q=80&w=1920', // Bus 2
+    'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&q=80&w=1920'  // Road
+];
+let currentSlide = 0;
+
+function updateCarousel() {
+    const heroImg = $('hero-img');
+    if (heroImg) {
+        heroImg.style.backgroundImage = `url('${heroImages[currentSlide]}')`;
+    }
+    for (let i = 0; i < heroImages.length; i++) {
+        const dot = $(`dot-${i}`);
+        if (dot) {
+            if (i === currentSlide) {
+                dot.classList.add('active');
+            } else {
+                dot.classList.remove('active');
+            }
+        }
+    }
+}
+
+function nextSlide() {
+    currentSlide = (currentSlide + 1) % heroImages.length;
+    updateCarousel();
+}
+
+function prevSlide() {
+    currentSlide = (currentSlide - 1 + heroImages.length) % heroImages.length;
+    updateCarousel();
+}
+
+function goToSlide(index) {
+    currentSlide = index;
+    updateCarousel();
+}
+
+// Auto-advance
+setInterval(() => {
+    if (state.currentView === 'view-home') {
+        nextSlide();
+    }
+}, 5000);
+
+// ============================================================
 // UTILITY
 // ============================================================
 function generateBookingCode() {
@@ -26,7 +115,7 @@ function generateBookingCode() {
 }
 
 function showView(viewId) {
-    const views = ['view-home', 'view-results', 'view-seatmap', 'view-form', 'view-confirmation', 'view-charter'];
+    const views = ['view-home', 'view-results', 'view-seatmap', 'view-form', 'view-confirmation', 'view-charter', 'view-admin'];
     views.forEach(v => {
         if ($(v)) $(v).classList.add('hidden');
     });
@@ -35,6 +124,11 @@ function showView(viewId) {
         $('app-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
     state.currentView = viewId;
+
+    // Charger les données admin quand on ouvre la vue admin
+    if (viewId === 'view-admin' && typeof loadAdminData === 'function') {
+        loadAdminData();
+    }
 }
 
 function goHome() { showView('view-home'); }
@@ -60,15 +154,21 @@ db.auth.onAuthStateChange((event, session) => {
 });
 
 function updateNavbarAuthUI(user) {
-    const guestEl = $('nav-guest');
-    const userEl  = $('nav-user');
+    const guestEl    = $('nav-guest');
+    const userEl     = $('nav-user');
+    const adminBtn   = $('btn-admin-nav');
     if (user) {
         guestEl.classList.add('hidden');
         userEl.classList.remove('hidden');
         $('user-display-name').textContent = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+        // Afficher le bouton ADMIN uniquement pour l'email administrateur
+        if (adminBtn) {
+            adminBtn.classList.toggle('hidden', user.email !== 'nixnithersaintval@gmail.com');
+        }
     } else {
         guestEl.classList.remove('hidden');
         userEl.classList.add('hidden');
+        if (adminBtn) adminBtn.classList.add('hidden');
     }
 }
 
@@ -207,10 +307,21 @@ $('search-form').addEventListener('submit', async (e) => {
             .order('departure_at', { ascending: true });
 
         if (date) {
-            const start = new Date(date);
-            const end = new Date(date);
-            end.setDate(end.getDate() + 1);
-            query = query.gte('departure_at', start.toISOString()).lt('departure_at', end.toISOString());
+            let start;
+            if (date.includes('/')) {
+                const parts = date.split('/');
+                start = new Date(`${parts[2]}-${parts[1]}-${parts[0]}T00:00:00Z`);
+            } else {
+                start = new Date(date);
+            }
+
+            if (!isNaN(start.getTime())) {
+                const end = new Date(start);
+                end.setDate(end.getDate() + 1);
+                query = query.gte('departure_at', start.toISOString()).lt('departure_at', end.toISOString());
+            } else {
+                console.warn("Invalid date format:", date);
+            }
         }
 
         const { data, error } = await query;
@@ -220,8 +331,8 @@ $('search-form').addEventListener('submit', async (e) => {
         renderTrips();
         showView('view-results');
     } catch (err) {
-        console.error(err);
-        alert("Search error.");
+        console.error("Search failed:", err);
+        alert("Search error: " + (err.message || "Invalid input"));
     } finally {
         btn.disabled = false;
         btn.textContent = "BOOK NOW !";
@@ -356,7 +467,32 @@ $('booking-form').addEventListener('submit', async (e) => {
         if (error) throw error;
 
         $('ticket-code').textContent = bookingCode;
-        showView('view-confirmation');
+        
+        // ── Afficher la popup de paiement au lieu de la confirmation directe ──
+        const trip = state.selectedTrip;
+        const dDate = trip?.departure_at
+            ? new Date(trip.departure_at).toLocaleString('fr-FR')
+            : '—';
+            
+        $('payment-details').innerHTML = `
+            <strong>Trajet:</strong> ${trip?.origin || '?'} → ${trip?.destination || '?'}<br>
+            <strong>Siège:</strong> ${state.selectedSeat}<br>
+            <strong>Montant à payer:</strong> ${trip?.price || '0'} HTG
+        `;
+        $('payment-backdrop').classList.remove('hidden');
+
+        // ── Notification email admin ──
+        sendAdminEmail(EMAILJS_TEMPLATE_BOOKING, {
+            client_name:    name,
+            client_email:   email,
+            client_phone:   phone,
+            trip_route:     `${trip?.origin || '?'} → ${trip?.destination || '?'}`,
+            trip_date:      dDate,
+            seat_number:    String(state.selectedSeat),
+            booking_code:   bookingCode,
+            price:          `${trip?.price || '—'} HTG`,
+            bus_company:    trip?.bus_company || '—',
+        });
     } catch (err) {
         console.error(err);
         if (err.code === '23505') {
@@ -410,7 +546,18 @@ $('charter-form').addEventListener('submit', async (e) => {
         const { error } = await db.from('charter_requests').insert([insertData]);
         if (error) throw error;
 
-        alert('Your custom trip request has been submitted successfully! We will contact you soon.');
+        // ── Notification email admin ──
+        sendAdminEmail(EMAILJS_TEMPLATE_CHARTER, {
+            client_name:    insertData.name,
+            client_email:   insertData.email,
+            client_phone:   insertData.phone,
+            client_address: insertData.address,
+            event_purpose:  insertData.purpose,
+            event_date:     insertData.event_date,
+            notes:          insertData.notes || 'Aucune note',
+        });
+
+        alert('Votre demande a été soumise avec succès ! Nous vous contacterons bientôt.');
         $('charter-form').reset();
         goHome();
     } catch (err) {
@@ -431,10 +578,254 @@ $('auth-backdrop').addEventListener('click', (e) => {
 $('auth-modal-close').addEventListener('click', closeAuthModal);
 $('btn-google-signin').addEventListener('click', signInWithGoogle);
 
+// Payment Modal Logic
+$('payment-backdrop').addEventListener('click', (e) => {
+    if (e.target === $('payment-backdrop')) $('payment-backdrop').classList.add('hidden');
+});
+$('payment-modal-close').addEventListener('click', () => {
+    $('payment-backdrop').classList.add('hidden');
+});
+$('payment-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const btn = $('btn-pay-now');
+    btn.disabled = true;
+    btn.textContent = 'PROCESSING...';
+    
+    // Simulate payment processing
+    setTimeout(() => {
+        $('payment-backdrop').classList.add('hidden');
+        btn.disabled = false;
+        btn.textContent = 'PAY NOW';
+        $('payment-form').reset();
+        
+        alert('Paiement réussi ! Votre réservation est confirmée.');
+        showView('view-confirmation');
+    }, 1500);
+});
+
 document.addEventListener('DOMContentLoaded', async () => {
+    // Empêcher de choisir une date passée
+    const dateInput = $('input-date');
+    if (dateInput) {
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.setAttribute('min', today);
+    }
+
     const { data: { session } } = await db.auth.getSession();
     if (session?.user) {
         state.currentUser = session.user;
         updateNavbarAuthUI(session.user);
     }
 });
+
+// ============================================================
+// ADMIN DASHBOARD LOGIC (Intégré)
+// ============================================================
+const ADMIN_EMAIL_ADDR = 'nixnithersaintval@gmail.com';
+
+let adminBookings = [];
+let adminCharters = [];
+let adminRealtimeReady = false;
+
+async function loadAdminData() {
+    await Promise.all([loadAdminBookings(), loadAdminCharters()]);
+    updateAdminStats();
+    if (!adminRealtimeReady) {
+        subscribeAdminRealtime();
+        adminRealtimeReady = true;
+    }
+}
+
+async function loadAdminBookings() {
+    const { data, error } = await db
+        .from('bookings')
+        .select('*, trips(origin, destination, departure_at, price)')
+        .order('booked_at', { ascending: false });
+
+    if (error) { console.error('[Admin] Bookings:', error); return; }
+    adminBookings = data || [];
+    renderAdminBookings(adminBookings);
+}
+
+async function loadAdminCharters() {
+    const { data, error } = await db
+        .from('charter_requests')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (error) { console.error('[Admin] Charters:', error); return; }
+    adminCharters = data || [];
+    renderAdminCharters(adminCharters);
+}
+
+function updateAdminStats() {
+    const pending  = adminCharters.filter(c => c.status === 'pending').length;
+    const approved = adminCharters.filter(c => c.status === 'approved').length;
+
+    const el = id => document.getElementById(id);
+    if (el('a-stat-bookings')) el('a-stat-bookings').textContent = adminBookings.length;
+    if (el('a-stat-charters')) el('a-stat-charters').textContent = adminCharters.length;
+    if (el('a-stat-approved')) el('a-stat-approved').textContent = approved;
+    if (el('a-stat-pending'))  el('a-stat-pending').textContent  = pending;
+}
+
+function renderAdminBookings(list) {
+    const tbody = document.getElementById('a-bookings-body');
+    if (!tbody) return;
+
+    if (!list.length) {
+        tbody.innerHTML = `<tr><td colspan="6" class="adm-empty">Aucune réservation trouvée.</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = list.map(b => {
+        const trip    = b.trips || {};
+        const origin  = aEsc(trip.origin || '?');
+        const dest    = aEsc(trip.destination || '?');
+        const booked  = b.booked_at
+            ? new Date(b.booked_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
+            : '—';
+
+        return `<tr>
+            <td>
+                <div class="adm-name">${aEsc(b.passenger_name)}</div>
+                <div class="adm-email">${aEsc(b.passenger_email)}</div>
+                <div class="adm-phone">${aEsc(b.passenger_phone)}</div>
+            </td>
+            <td><span class="adm-route">${origin} ➔ ${dest}</span></td>
+            <td style="font-weight:700;font-size:15px;">${b.seat_number || '—'}</td>
+            <td><span class="adm-code">${aEsc(b.booking_code)}</span></td>
+            <td style="font-size:12px;color:#888;">${booked}</td>
+            <td>
+                <span class="adm-badge ${b.status || 'confirmed'}">
+                    ${b.status === 'confirmed' ? '✓ Confirmé' : '✗ Annulé'}
+                </span>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+function renderAdminCharters(list) {
+    const tbody = document.getElementById('a-charters-body');
+    if (!tbody) return;
+
+    if (!list.length) {
+        tbody.innerHTML = `<tr><td colspan="7" class="adm-empty">Aucune demande charter.</td></tr>`;
+        return;
+    }
+
+    const labels = {
+        pending:  '⏳ En attente',
+        approved: '✅ Approuvé',
+        rejected: '❌ Rejeté'
+    };
+
+    tbody.innerHTML = list.map(c => {
+        const evtDate   = c.event_date
+            ? new Date(c.event_date + 'T00:00').toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
+            : '—';
+        const isPending = c.status === 'pending';
+        const notes     = c.notes
+            ? (c.notes.length > 60 ? c.notes.substring(0, 60) + '…' : c.notes)
+            : '—';
+
+        return `<tr>
+            <td>
+                <div class="adm-name">${aEsc(c.name)}</div>
+                <div class="adm-email">${aEsc(c.email)}</div>
+            </td>
+            <td><div class="adm-phone">${aEsc(c.phone)}</div></td>
+            <td style="font-weight:600;">${aEsc(c.purpose)}</td>
+            <td style="font-size:12px;">${evtDate}</td>
+            <td style="font-size:12px;color:#666;">${aEsc(notes)}</td>
+            <td><span class="adm-badge ${c.status}">${labels[c.status] || c.status}</span></td>
+            <td>
+                <div class="adm-acts">
+                    <button class="adm-btn-ok"
+                        onclick="setCharterStatus('${c.id}','approved')"
+                        ${!isPending ? 'disabled' : ''}>✓ OK</button>
+                    <button class="adm-btn-no"
+                        onclick="setCharterStatus('${c.id}','rejected')"
+                        ${!isPending ? 'disabled' : ''}>✗ Non</button>
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+async function setCharterStatus(id, status) {
+    const { error } = await db
+        .from('charter_requests')
+        .update({ status })
+        .eq('id', id);
+
+    if (error) {
+        alert('Erreur lors de la mise à jour.');
+        console.error(error);
+        return;
+    }
+
+    const idx = adminCharters.findIndex(c => c.id === id);
+    if (idx !== -1) adminCharters[idx].status = status;
+
+    renderAdminCharters(applyCharterFilter());
+    updateAdminStats();
+}
+
+function switchAdminTab(tab) {
+    const isBookings = tab === 'bookings';
+    document.getElementById('adm-panel-bookings').classList.toggle('hidden', !isBookings);
+    document.getElementById('adm-panel-charters').classList.toggle('hidden', isBookings);
+    document.getElementById('atab-book').classList.toggle('active', isBookings);
+    document.getElementById('atab-charter').classList.toggle('active', !isBookings);
+}
+
+function filterAdminBookings() {
+    const q = (document.getElementById('a-search-bookings')?.value || '').toLowerCase();
+    const filtered = adminBookings.filter(b =>
+        (b.passenger_name?.toLowerCase().includes(q)) ||
+        (b.passenger_email?.toLowerCase().includes(q)) ||
+        (b.booking_code?.toLowerCase().includes(q)) ||
+        (b.trips?.origin?.toLowerCase().includes(q)) ||
+        (b.trips?.destination?.toLowerCase().includes(q))
+    );
+    renderAdminBookings(filtered);
+}
+
+function applyCharterFilter() {
+    const q = (document.getElementById('a-search-charters')?.value || '').toLowerCase();
+    return adminCharters.filter(c =>
+        (c.name?.toLowerCase().includes(q)) ||
+        (c.email?.toLowerCase().includes(q)) ||
+        (c.purpose?.toLowerCase().includes(q)) ||
+        (c.phone?.toLowerCase().includes(q))
+    );
+}
+
+function filterAdminCharters() {
+    renderAdminCharters(applyCharterFilter());
+}
+
+function subscribeAdminRealtime() {
+    db.channel('adm-rt-bookings')
+        .on('postgres_changes',
+            { event: 'INSERT', schema: 'public', table: 'bookings' },
+            async () => { await loadAdminBookings(); updateAdminStats(); })
+        .subscribe();
+
+    db.channel('adm-rt-charters')
+        .on('postgres_changes',
+            { event: '*', schema: 'public', table: 'charter_requests' },
+            async () => { await loadAdminCharters(); updateAdminStats(); })
+        .subscribe();
+}
+
+function aEsc(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
