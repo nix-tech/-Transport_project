@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HAITIAN TRIP BUS TOURS - Fast and Safe Transportation</title>
+
+    <!-- Google Fonts: Montserrat -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Supabase JS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <!-- ========================================================== -->
+    <!-- AUTH MODAL                                                  -->
+    <!-- ========================================================== -->
+    <div id="auth-backdrop" class="modal-backdrop">
+        <div class="auth-modal">
+            <button id="auth-modal-close" class="modal-close">✕</button>
+
+            <h2 id="auth-modal-title" class="auth-title">Login</h2>
+
+            <!-- Google Sign In -->
+            <button id="btn-google-signin" class="btn-google" type="button">
+                <svg width="18" height="18" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                    <path fill="#EA4335"
+                        d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+                    <path fill="#4285F4"
+                        d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+                    <path fill="#FBBC05"
+                        d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+                    <path fill="#34A853"
+                        d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+                    <path fill="none" d="M0 0h48v48H0z" />
+                </svg>
+                Sign in with Google
+            </button>
+
+            <div class="auth-divider"><span>OR</span></div>
+
+            <div class="auth-tabs">
+                <button id="tab-signin" class="auth-tab active" onclick="switchAuthTab('signin')">Sign In</button>
+                <button id="tab-signup" class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</button>
+            </div>
+
+            <div id="auth-message" class="auth-message"></div>
+
+            <!-- Sign In Form -->
+            <form id="form-signin" class="auth-form" onsubmit="handleEmailSignIn(event)">
+                <input id="signin-email" type="email" class="form-input" placeholder="Email Address" required>
+                <input id="signin-password" type="password" class="form-input" placeholder="Password" required>
+                <button type="submit" id="btn-signin-submit" class="btn-primary">LOGIN</button>
+            </form>
+
+            <!-- Sign Up Form -->
+            <form id="form-signup" class="auth-form hidden" onsubmit="handleEmailSignUp(event)">
+                <input id="signup-name" type="text" class="form-input" placeholder="Full Name" required>
+                <input id="signup-email" type="email" class="form-input" placeholder="Email Address" required>
+                <input id="signup-password" type="password" class="form-input" placeholder="Password (min 6)" required
+                    minlength="6">
+                <button type="submit" id="btn-signup-submit" class="btn-primary">REGISTER</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================================== -->
+    <!-- TOP HEADER                                                  -->
+    <!-- ========================================================== -->
+    <header class="top-header">
+        <div class="container header-container">
+            <div class="logo">
+                <h1><i>HAITIAN TRIP BUS TOURS</i></h1>
+                <div class="logo-lines">
+                    <div class="line line-1"></div>
+                    <div class="line line-2"></div>
+                </div>
+            </div>
+            <div class="contact-info">
+                <div class="contact-icon">
+                    <svg fill="currentColor" viewBox="0 0 24 24" width="20" height="20">
+                        <path
+                            d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" />
+                    </svg>
+                </div>
+                <div class="contact-text">
+                    <span class="call-text">Call Us Now !</span>
+                    <span class="phone-number">+50931743955</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ========================================================== -->
+    <!-- NAVIGATION BAR                                              -->
+    <!-- ========================================================== -->
+    <nav class="main-nav">
+        <div class="container nav-container">
+            <ul class="nav-links">
+                <li><a href="#" onclick="goHome()">HOME</a></li>
+                <li><a href="#about-section">ABOUT</a></li>
+                <li><a href="#booking-section">BOOKING</a></li>
+                <li><a href="#promos-section">OFFERS</a></li>
+                <li><a href="#features-section">SERVICES</a></li>
+                <li><a href="#footer-section">CONTACT</a></li>
+            </ul>
+            <div class="nav-auth" id="nav-auth-area">
+                <button id="nav-guest" class="btn-nav-login" onclick="openAuthModal()">LOGIN</button>
+                <div id="nav-user" class="hidden nav-user-info">
+                    <span id="user-display-name">User</span>
+                    <button class="btn-nav-logout" onclick="handleSignOut()">LOGOUT</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN APP CONTAINER -->
+    <div id="app-section">
+
+        <!-- ========================================================== -->
+        <!-- VIEW: HOME                                                  -->
+        <!-- ========================================================== -->
+        <div id="view-home">
+            <!-- Hero Slider -->
+            <section class="hero">
+                <div class="hero-image"
+                    style="background-image: url('https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80&w=1920');">
+                </div>
+                <div class="container hero-content">
+                    <div class="slider-arrow arrow-left">
+                        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2"
+                            fill="none">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                    </div>
+
+                    <div class="hero-text-box">
+                        <h2 class="hero-subtitle">MAKING TRANSPORTATION</h2>
+                        <h1 class="hero-title">FAST AND SAFE !</h1>
+                        <button class="btn-read-more"
+                            onclick="document.getElementById('booking-section').scrollIntoView({behavior:'smooth'})">Read
+                            More</button>
+                    </div>
+
+                    <div class="slider-arrow arrow-right">
+                        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2"
+                            fill="none">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </div>
+                </div>
+                <div class="slider-dots">
+                    <div class="dot active"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                </div>
+            </section>
+
+            <!-- Booking Section -->
+            <section id="booking-section" class="booking-section">
+                <div class="container">
+                    <h2 class="section-heading">BOOK MY BUS !</h2>
+
+                    <form id="search-form" class="booking-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>FROM</label>
+                                <select id="input-origin" class="form-input" required>
+                                    <option value="" disabled selected>SELECT DEPARTEMENT</option>
+                                    <option value="Artibonite">Artibonite</option>
+                                    <option value="Centre">Centre</option>
+                                    <option value="Grand'Anse">Grand'Anse</option>
+                                    <option value="Nippes">Nippes</option>
+                                    <option value="Nord">Nord</option>
+                                    <option value="Nord-Est">Nord-Est</option>
+                                    <option value="Nord-Ouest">Nord-Ouest</option>
+                                    <option value="Ouest">Ouest</option>
+                                    <option value="Sud">Sud</option>
+                                    <option value="Sud-Est">Sud-Est</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>TO</label>
+                                <select id="input-destination" class="form-input" required>
+                                    <option value="" disabled selected>SELECT DEPARTEMENT</option>
+                                    <option value="Artibonite">Artibonite</option>
+                                    <option value="Centre">Centre</option>
+                                    <option value="Grand'Anse">Grand'Anse</option>
+                                    <option value="Nippes">Nippes</option>
+                                    <option value="Nord">Nord</option>
+                                    <option value="Nord-Est">Nord-Est</option>
+                                    <option value="Nord-Ouest">Nord-Ouest</option>
+                                    <option value="Ouest">Ouest</option>
+                                    <option value="Sud">Sud</option>
+                                    <option value="Sud-Est">Sud-Est</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>DEPART ON</label>
+                                <input type="date" id="input-date" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label>PASSENGERS</label>
+                                <input type="number" class="form-input" placeholder="05" min="1">
+                            </div>
+                            <div class="form-group">
+                                <label>SITTING OPTION</label>
+                                <select class="form-input">
+                                    <option>ANY</option>
+                                    <option>WINDOW</option>
+                                    <option>AISLE</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row mt-3">
+                            <div class="form-group">
+                                <label>SELECT HOURS</label>
+                                <select class="form-input" id="input-time" required>
+                                    <option value="" disabled selected>8:00 AM - 4:00 PM</option>
+                                    <option>8:00 AM</option>
+                                    <option>9:00 AM</option>
+                                    <option>10:00 AM</option>
+                                    <option>11:00 AM</option>
+                                    <option>12:00 PM</option>
+                                    <option>1:00 PM</option>
+                                    <option>2:00 PM</option>
+                                    <option>3:00 PM</option>
+                                    <option>4:00 PM</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>BUS TYPE</label>
+                                <select class="form-input">
+                                    <option>ANY BUS</option>
+                                    <option>AC</option>
+                                    <option>NON-AC</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>MORE OPTION</label>
+                                <select class="form-input">
+                                    <option>SELECT</option>
+                                </select>
+                            </div>
+                            <div class="form-group form-group-btn">
+                                <button type="submit" id="btn-search" class="btn-book-now">BOOK NOW !</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Features Section -->
+            <section id="features-section" class="features-section">
+                <div class="container">
+                    <h2 class="features-heading">Explore Your Favorite Destination With<br><span>Style And
+                            Comfort!</span></h2>
+
+                    <div class="features-grid">
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <svg viewBox="0 0 24 24" width="32" height="32" stroke="currentColor" stroke-width="2"
+                                    fill="none">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                </svg>
+                            </div>
+                            <h3>FAST</h3>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <svg viewBox="0 0 24 24" width="32" height="32" stroke="currentColor" stroke-width="2"
+                                    fill="none">
+                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                </svg>
+                            </div>
+                            <h3>SAFE</h3>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <svg viewBox="0 0 24 24" width="32" height="32" stroke="currentColor" stroke-width="2"
+                                    fill="none">
+                                    <path
+                                        d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z">
+                                    </path>
+                                    <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                                </svg>
+                            </div>
+                            <h3>COMFORT</h3>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <svg viewBox="0 0 24 24" width="32" height="32" stroke="currentColor" stroke-width="2"
+                                    fill="none">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="9" cy="7" r="4"></circle>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                </svg>
+                            </div>
+                            <h3>SERVICE</h3>
+                        </div>
+                    </div>
+
+                    <p class="features-text">We are an accredited bus company that operates bus trip and charter work in
+                        the Geelong area. We offer a range<br>of services, from day trips down the Great Ocean Road, to
+                        transport for wedding guests, Buck's and Hen's nights or<br>school trips.</p>
+
+                    <button class="btn-read-more-cyan">READ MORE</button>
+                </div>
+            </section>
+
+            <!-- Promos Section -->
+            <section id="promos-section" class="promos-section">
+                <div class="container promos-container">
+                    <div class="promo-box promo-1" onclick="showCharterForm('Special Event Bus')">
+                        <div class="promo-content">
+                            <h3>BOOK A BUS FOR !</h3>
+                            <p>FUNCTION . BIRTHDAY PARTIES . SPORTING EVENTS . MYSTRY TRIP</p>
+                        </div>
+                        <div class="promo-arrow"><svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor"
+                                stroke-width="2" fill="none">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg></div>
+                    </div>
+                    <div class="promo-box promo-2" onclick="showCharterForm('Custom Trip')">
+                        <div class="promo-content">
+                            <h3>WANT TO BOOK A TRIP?</h3>
+                            <p>FUNCTION . BIRTHDAY PARTIES . SPORTING EVENTS . MYSTRY TRIP</p>
+                        </div>
+                        <div class="promo-arrow"><svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor"
+                                stroke-width="2" fill="none">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg></div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ========================================================== -->
+        <!-- VIEW: RESULTS                                               -->
+        <!-- ========================================================== -->
+        <div id="view-results" class="hidden">
+            <section class="booking-section">
+                <div class="container">
+                    <div class="results-header">
+                        <h2 class="section-heading">AVAILABLE TRIPS</h2>
+                        <button onclick="goHome()" class="btn-read-more-cyan" style="margin-top:0;">Search
+                            Again</button>
+                    </div>
+                    <div id="trips-list" class="results-grid"></div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ========================================================== -->
+        <!-- VIEW: SEATMAP                                               -->
+        <!-- ========================================================== -->
+        <div id="view-seatmap" class="hidden">
+            <section class="booking-section">
+                <div class="container">
+                    <div class="results-header">
+                        <h2 class="section-heading">SELECT YOUR SEAT</h2>
+                        <button onclick="goToResults()" class="btn-read-more-cyan" style="margin-top:0;">Back to
+                            Trips</button>
+                    </div>
+
+                    <div class="seatmap-layout">
+                        <div class="seatmap-info">
+                            <h3 id="seatmap-route">Origin to Destination</h3>
+                            <p id="seatmap-details">Company | Price</p>
+                            <div class="seat-legend">
+                                <span class="legend-item"><span class="box free"></span> Free</span>
+                                <span class="legend-item"><span class="box occupied"></span> Occupied</span>
+                                <span class="legend-item"><span class="box selected"></span> Selected</span>
+                            </div>
+                            <div class="seat-grid" id="seat-grid"></div>
+                        </div>
+                        <div class="seatmap-summary">
+                            <h3>Booking Summary</h3>
+                            <p>Selected Seat: <strong id="form-seat">-</strong></p>
+                            <p>Price: <strong id="form-price">-</strong></p>
+                            <button id="btn-proceed-booking" class="btn-book-now mt-3" onclick="showBookingForm()"
+                                disabled>PROCEED</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ========================================================== -->
+        <!-- VIEW: BOOKING FORM                                          -->
+        <!-- ========================================================== -->
+        <div id="view-form" class="hidden">
+            <section class="booking-section">
+                <div class="container">
+                    <div class="results-header">
+                        <h2 class="section-heading">PASSENGER DETAILS</h2>
+                        <button onclick="showView('view-seatmap')" class="btn-read-more-cyan" style="margin-top:0;">Back
+                            to Seats</button>
+                    </div>
+
+                    <form id="booking-form" class="passenger-form">
+                        <div class="form-group">
+                            <label>FULL NAME</label>
+                            <input type="text" id="input-name" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label>EMAIL ADDRESS</label>
+                            <input type="email" id="input-email" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label>PHONE NUMBER</label>
+                            <input type="text" id="input-phone" class="form-input" required>
+                        </div>
+                        <button type="submit" id="btn-book" class="btn-book-now mt-3">CONFIRM BOOKING</button>
+                    </form>
+                </div>
+            </section>
+        </div>
+
+        <!-- ========================================================== -->
+        <!-- VIEW: CONFIRMATION                                          -->
+        <!-- ========================================================== -->
+        <div id="view-confirmation" class="hidden">
+            <section class="booking-section">
+                <div class="container" style="text-align: center;">
+                    <h2 class="section-heading">BOOKING CONFIRMED !</h2>
+                    <p>Your booking code is: <strong id="ticket-code"
+                            style="font-size: 24px; color: #00aeef;">---</strong></p>
+                    <button onclick="goHome()" class="btn-book-now mt-3">HOME</button>
+                </div>
+            </section>
+        </div>
+
+        <!-- ========================================================== -->
+        <!-- VIEW: CHARTER FORM (Custom Trip)                            -->
+        <!-- ========================================================== -->
+        <div id="view-charter" class="hidden">
+            <section class="booking-section">
+                <div class="container">
+                    <div class="results-header">
+                        <h2 class="section-heading">REQUEST A CUSTOM BUS</h2>
+                        <button onclick="goHome()" class="btn-read-more-cyan" style="margin-top:0;">Back to
+                            Home</button>
+                    </div>
+
+                    <form id="charter-form" class="passenger-form">
+                        <div class="form-group" style="margin-bottom: 15px;">
+                            <label>FULL NAME</label>
+                            <input type="text" id="charter-name" class="form-input" required>
+                        </div>
+                        <div class="form-row" style="margin-bottom: 15px;">
+                            <div class="form-group">
+                                <label>EMAIL</label>
+                                <input type="email" id="charter-email" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label>PHONE NUMBER</label>
+                                <input type="text" id="charter-phone" class="form-input" required>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 15px;">
+                            <label>FULL ADDRESS</label>
+                            <input type="text" id="charter-address" class="form-input"
+                                placeholder="Your physical address" required>
+                        </div>
+                        <div class="form-row" style="margin-bottom: 15px;">
+                            <div class="form-group">
+                                <label>REASON FOR BOOKING</label>
+                                <select id="charter-purpose" class="form-input" required>
+                                    <option value="" disabled selected>SELECT PURPOSE</option>
+                                    <option value="Function">Function</option>
+                                    <option value="Birthday Party">Birthday Party</option>
+                                    <option value="Sporting Event">Sporting Event</option>
+                                    <option value="Mystery Trip">Mystery Trip</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>DATE OF EVENT</label>
+                                <input type="date" id="charter-date" class="form-input" required>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 15px;">
+                            <label>ADDITIONAL DETAILS</label>
+                            <textarea id="charter-notes" class="form-input" rows="4"
+                                placeholder="Tell us more about your trip (number of people, destination, etc.)"></textarea>
+                        </div>
+                        <button type="submit" id="btn-charter-submit" class="btn-book-now mt-3">SUBMIT REQUEST</button>
+                    </form>
+                </div>
+            </section>
+        </div>
+
+    </div>
+
+    <!-- ========================================================== -->
+    <!-- FOOTER                                                      -->
+    <!-- ========================================================== -->
+    <footer id="footer-section" class="main-footer">
+        <div class="container footer-grid">
+            <div class="footer-col">
+                <h3>MENU</h3>
+                <ul>
+                    <li><a href="#">HOME</a></li>
+                    <li><a href="#">ABOUT</a></li>
+                    <li><a href="#">SERVICE</a></li>
+                    <li><a href="#">BOOKING</a></li>
+                    <li><a href="#">CONTACT</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3>SOCIAL</h3>
+                <ul>
+                    <li><a href="#">FACEBOOK</a></li>
+                    <li><a href="#">TWITTER</a></li>
+                    <li><a href="#">GOOGLE PLUS</a></li>
+                    <li><a href="#">PINTEREST</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3>NEWS</h3>
+                <div class="news-item">
+                    <h4>• HAITIAN TRIP BUS TOURS :</h4>
+                    <p>We are an accredited bus comp<br>any that operates</p>
+                </div>
+                <div class="news-item">
+                    <h4>• HAITIAN TRIP BUS TOURS :</h4>
+                    <p>We are an accredited bus comp<br>any that operates</p>
+                </div>
+            </div>
+            <div class="footer-col">
+                <h3>BLOG</h3>
+                <div class="blog-item">
+                    <div class="blog-img"></div>
+                    <span>HAITIAN TRIP BUS TOURS :</span>
+                </div>
+                <div class="blog-item">
+                    <div class="blog-img"></div>
+                    <span>HAITIAN TRIP BUS TOURS :</span>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <div class="container">
+                HAITIAN TRIP BUS TOURS &copy; 2026. Privacy Policy
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="js/config.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>
