@@ -456,7 +456,7 @@ $('booking-form').addEventListener('submit', async (e) => {
             passenger_email: email,
             passenger_phone: phone,
             booking_code: bookingCode,
-            status: 'confirmed'
+            status: 'pending'
         };
 
         if (state.currentUser) {
@@ -606,15 +606,22 @@ $('payment-form').addEventListener('submit', (e) => {
 document.addEventListener('DOMContentLoaded', async () => {
     // Empêcher de choisir une date passée
     const dateInput = $('input-date');
-    if (dateInput) {
+    const charterDateInput = $('charter-date');
+    if (dateInput || charterDateInput) {
         const today = new Date().toISOString().split('T')[0];
-        dateInput.setAttribute('min', today);
+        if (dateInput) dateInput.setAttribute('min', today);
+        if (charterDateInput) charterDateInput.setAttribute('min', today);
     }
 
     const { data: { session } } = await db.auth.getSession();
     if (session?.user) {
         state.currentUser = session.user;
         updateNavbarAuthUI(session.user);
+    }
+    
+    // Charger les avis clients
+    if (typeof loadReviews === 'function') {
+        loadReviews();
     }
 });
 
@@ -686,6 +693,14 @@ function renderAdminBookings(list) {
             ? new Date(b.booked_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
             : '—';
 
+        const bStatus = b.status || 'pending';
+        const isPending = bStatus === 'pending';
+        const labels = {
+            pending:  '⏳ En attente',
+            confirmed: '✅ Confirmé',
+            rejected: '❌ Annulé'
+        };
+
         return `<tr>
             <td>
                 <div class="adm-name">${aEsc(b.passenger_name)}</div>
@@ -697,9 +712,19 @@ function renderAdminBookings(list) {
             <td><span class="adm-code">${aEsc(b.booking_code)}</span></td>
             <td style="font-size:12px;color:#888;">${booked}</td>
             <td>
-                <span class="adm-badge ${b.status || 'confirmed'}">
-                    ${b.status === 'confirmed' ? '✓ Confirmé' : '✗ Annulé'}
+                <span class="adm-badge ${bStatus}">
+                    ${labels[bStatus] || bStatus}
                 </span>
+            </td>
+            <td>
+                <div class="adm-acts">
+                    <button class="adm-btn-ok"
+                        onclick="setBookingStatus('${b.id}','confirmed')"
+                        ${!isPending ? 'disabled' : ''}>✓ OK</button>
+                    <button class="adm-btn-no"
+                        onclick="setBookingStatus('${b.id}','rejected')"
+                        ${!isPending ? 'disabled' : ''}>✗ Non</button>
+                </div>
             </td>
         </tr>`;
     }).join('');
@@ -751,6 +776,25 @@ function renderAdminCharters(list) {
             </td>
         </tr>`;
     }).join('');
+}
+async function setBookingStatus(id, status) {
+    const { error } = await db
+        .from('bookings')
+        .update({ status })
+        .eq('id', id);
+
+    if (error) {
+        alert('Erreur lors de la mise à jour.');
+        console.error(error);
+        return;
+    }
+
+    const idx = adminBookings.findIndex(b => b.id === id);
+    if (idx !== -1) adminBookings[idx].status = status;
+
+    filterAdminBookings();
+    // Assuming you have an updateAdminStats function that calculates booking stats too, 
+    // but right now it only calculates charter pending/approved. We can update it later if needed.
 }
 
 async function setCharterStatus(id, status) {
@@ -828,4 +872,70 @@ function aEsc(str) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;');
 }
+
+// ============================================================
+// CUSTOMER REVIEWS LOGIC
+// ============================================================
+async function loadReviews() {
+    const list = $('reviews-list');
+    if (!list) return;
+
+    const { data, error } = await db
+        .from('reviews')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        list.innerHTML = `<div style="color: red; width: 100%; text-align: center;">Erreur de chargement des avis.</div>`;
+        return;
+    }
+
+    if (!data || data.length === 0) {
+        list.innerHTML = `<div style="color: #aaa; text-align: center; width: 100%;">Soyez le premier à laisser un avis !</div>`;
+        return;
+    }
+
+    list.innerHTML = data.map(r => {
+        const stars = '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
+        const date = new Date(r.created_at).toLocaleDateString('fr-FR');
+        return `
+            <div style="background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #dde4ed; box-shadow: 0 2px 10px rgba(0,0,0,0.03);">
+                <div style="color: #f59e0b; font-size: 18px; margin-bottom: 8px; letter-spacing: 2px;">${stars}</div>
+                <p style="color: #444; font-size: 14px; font-style: italic; margin-bottom: 15px; line-height: 1.5;">"${aEsc(r.comment)}"</p>
+                <div style="font-size: 12px; color: #888;"><strong>${aEsc(r.user_name)}</strong> — ${date}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+const reviewForm = $('review-form');
+if (reviewForm) {
+    reviewForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = $('btn-submit-review');
+        btn.disabled = true;
+        btn.textContent = 'Envoi...';
+
+        const insertData = {
+            user_name: $('review-name').value.trim(),
+            rating: parseInt($('review-rating').value, 10),
+            comment: $('review-comment').value.trim()
+        };
+
+        const { error } = await db.from('reviews').insert([insertData]);
+
+        if (error) {
+            console.error(error);
+            alert('Erreur lors de la soumission de votre avis.');
+        } else {
+            alert('Merci pour votre retour !');
+            reviewForm.reset();
+            loadReviews();
+        }
+
+        btn.disabled = false;
+        btn.textContent = 'Soumettre';
+    });
+}
+
 

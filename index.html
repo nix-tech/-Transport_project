@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HAITIAN TRIP BUS TOURS - Fast and Safe Transportation</title>
+    <link rel="icon" type="image/jpeg" href="img/logo_text.jpg">
 
     <!-- Google Fonts: Montserrat -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -82,13 +83,16 @@
     <!-- ========================================================== -->
     <header class="top-header">
         <div class="container header-container">
-            <div class="logo">
-                <h1><i>HAITIAN TRIP BUS TOURS</i></h1>
-                <div class="logo-lines">
-                    <div class="line line-1"></div>
-                    <div class="line line-2"></div>
+            <a href="#" onclick="goHome(); return false;" class="logo" style="display: flex; align-items: center; gap: 15px; text-decoration: none;">
+                <img src="img/logo_text.jpg" alt="HTBT Logo" style="height: 55px; width: auto; object-fit: contain; mix-blend-mode: multiply;">
+                <div style="display: flex; flex-direction: column;">
+                    <h1><i>HAITIAN TRIP BUS TOURS</i></h1>
+                    <div class="logo-lines" style="margin-top: 4px;">
+                        <div class="line line-1"></div>
+                        <div class="line line-2"></div>
+                    </div>
                 </div>
-            </div>
+            </a>
             <div class="contact-info">
                 <div class="contact-icon">
                     <svg fill="currentColor" viewBox="0 0 24 24" width="20" height="20">
@@ -563,10 +567,11 @@
                                         <th>CODE</th>
                                         <th>DATE</th>
                                         <th>STATUT</th>
+                                        <th>ACTIONS</th>
                                     </tr>
                                 </thead>
                                 <tbody id="a-bookings-body">
-                                    <tr><td colspan="6" class="adm-empty">Chargement...</td></tr>
+                                    <tr><td colspan="7" class="adm-empty">Chargement...</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -607,6 +612,42 @@
     </div>
 
     </div>
+
+    <!-- ========================================================== -->
+    <!-- ABOUT & REVIEWS SECTION                                      -->
+    <!-- ========================================================== -->
+    <section id="about-section" style="padding: 60px 0; background-color: #f7f9fb; border-top: 1px solid #eee;">
+        <div class="container" style="display: flex; flex-direction: column; align-items: center; text-align: center; max-width: 900px;">
+            <h2 class="section-heading" style="margin-bottom: 20px; color: #00aeef;">ABOUT US</h2>
+            <p style="color: #555; font-size: 15px; line-height: 1.8; margin-bottom: 50px;">
+                HAITIAN TRIP BUS TOURS is your trusted partner for comfortable, safe, and reliable transportation across the country. 
+                With our modern fleet and experienced drivers, we connect cities and bring people together. 
+                Your journey and satisfaction are our top priorities.
+            </p>
+
+            <h2 class="section-heading" style="margin-bottom: 20px; color: #00aeef;">CUSTOMER REVIEWS</h2>
+            <div id="reviews-list" style="width: 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 40px; text-align: left;">
+                <div style="color: #aaa; text-align: center; width: 100%;">Chargement des avis...</div>
+            </div>
+
+            <div style="background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); width: 100%; max-width: 600px; text-align: left; border: 1px solid #dde4ed;">
+                <h3 style="margin-bottom: 20px; font-size: 18px; color: #222; border-bottom: 2px solid #00aeef; display: inline-block; padding-bottom: 5px;">Laissez un avis</h3>
+                <form id="review-form" style="display: flex; flex-direction: column; gap: 15px;">
+                    <input type="text" id="review-name" class="form-input" placeholder="Votre nom complet" required>
+                    <select id="review-rating" class="form-input" required>
+                        <option value="" disabled selected>Donnez une note de satisfaction</option>
+                        <option value="5">★★★★★ (Excellent)</option>
+                        <option value="4">★★★★☆ (Très Bien)</option>
+                        <option value="3">★★★☆☆ (Bien)</option>
+                        <option value="2">★★☆☆☆ (Passable)</option>
+                        <option value="1">★☆☆☆☆ (Médiocre)</option>
+                    </select>
+                    <textarea id="review-comment" class="form-input" rows="4" placeholder="Que pensez-vous de notre compagnie ?" required style="resize: vertical;"></textarea>
+                    <button type="submit" id="btn-submit-review" class="btn-read-more" style="align-self: flex-start; padding: 12px 30px; border-radius: 5px; cursor: pointer; border: none; background: #00aeef; color: #fff; font-weight: bold;">Soumettre</button>
+                </form>
+            </div>
+        </div>
+    </section>
 
     <!-- ========================================================== -->
     <!-- FOOTER                                                      -->
