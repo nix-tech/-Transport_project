@@ -36,7 +36,7 @@ CREATE TABLE public.bookings (
     passenger_email  TEXT NOT NULL,
     passenger_phone  TEXT NOT NULL,
     booking_code     TEXT NOT NULL UNIQUE,
-    status           TEXT NOT NULL DEFAULT 'confirmed' CHECK (status IN ('confirmed', 'cancelled')),
+    status           TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'cancelled')),
     booked_at        TIMESTAMPTZ DEFAULT NOW(),
     UNIQUE (trip_id, seat_number)
 );
@@ -89,6 +89,13 @@ CREATE POLICY "bookings_update_own"
     ON public.bookings FOR UPDATE
     USING (auth.uid() = user_id)
     WITH CHECK (auth.uid() = user_id);
+
+-- Admin peut mettre à jour n'importe quelle réservation (pour validation)
+DROP POLICY IF EXISTS "bookings_update_admin" ON public.bookings;
+CREATE POLICY "bookings_update_admin"
+    ON public.bookings FOR UPDATE
+    USING (auth.email() = 'nixnithersaintval@gmail.com')
+    WITH CHECK (auth.email() = 'nixnithersaintval@gmail.com');
 
 CREATE POLICY "bookings_delete_own"
     ON public.bookings FOR DELETE
