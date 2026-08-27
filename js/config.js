@@ -8,8 +8,8 @@
 // 5. Ajoute l'URL de redirection dans Google Cloud Console:
 //    https://YOUR_PROJECT_ID.supabase.co/auth/v1/callback
 
-const SUPABASE_URL = 'https://twokogkvkgdndxyifxnq.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_WwroKDNcqLzzYRI8c13NjQ_dxZiBTqe';
+const SUPABASE_URL = 'https://pkblrqbvsjoyxmlbogaw.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_OfcDWvsyD0LXrU0WSmm7GQ_eaOREyHX';
 
 // Redirect URL après Google OAuth (adapte pour production)
 const AUTH_REDIRECT_URL = window.location.origin + window.location.pathname;
