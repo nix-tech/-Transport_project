@@ -1,4 +1,4 @@
-#  BisRezèv — Sistèm Rezèvasyon Biyè Bis
+#  Haitian Trip Bus Tours  — Sistèm Rezèvasyon Biyè Bis
 
 > Yon aplikasyon Full-Stack pou rezève plas nan bis, bâti ak **HTML5 · Tailwind CSS · Vanilla JS · Supabase**.
 
