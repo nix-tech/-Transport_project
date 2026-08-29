@@ -125,6 +125,7 @@
                 <button id="nav-guest" class="btn-nav-login" onclick="openAuthModal()">LOGIN</button>
                 <div id="nav-user" class="hidden nav-user-info">
                     <span id="user-display-name">User</span>
+                    <button id="btn-my-bookings-nav" class="btn-nav-bookings" onclick="showView('view-my-bookings')"><i class="fa-solid fa-ticket-simple"></i> MY BOOKINGS</button>
                     <button id="btn-admin-nav" class="btn-nav-admin hidden" onclick="showView('view-admin')">ADMIN</button>
                     <button class="btn-nav-logout" onclick="handleSignOut()">LOGOUT</button>
                 </div>
@@ -182,9 +183,9 @@
                     <form id="search-form" class="booking-form">
                         <div class="form-row">
                             <div class="form-group">
-                                <label>FROM</label>
+                                <label><i class="fa-solid fa-location-dot"></i> FROM</label>
                                 <select id="input-origin" class="form-input" required>
-                                    <option value="" disabled selected>SELECT DEPARTEMENT</option>
+                                    <option value="" disabled>SELECT DEPARTEMENT</option>
                                     <option value="Artibonite">Artibonite</option>
                                     <option value="Centre">Centre</option>
                                     <option value="Grand'Anse">Grand'Anse</option>
@@ -192,20 +193,20 @@
                                     <option value="Nord">Nord</option>
                                     <option value="Nord-Est">Nord-Est</option>
                                     <option value="Nord-Ouest">Nord-Ouest</option>
-                                    <option value="Ouest">Ouest</option>
+                                    <option value="Ouest" selected>Ouest</option>
                                     <option value="Sud">Sud</option>
                                     <option value="Sud-Est">Sud-Est</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label>TO</label>
+                                <label><i class="fa-solid fa-map-pin"></i> TO</label>
                                 <select id="input-destination" class="form-input" required>
-                                    <option value="" disabled selected>SELECT DEPARTEMENT</option>
+                                    <option value="" disabled>SELECT DEPARTEMENT</option>
                                     <option value="Artibonite">Artibonite</option>
                                     <option value="Centre">Centre</option>
                                     <option value="Grand'Anse">Grand'Anse</option>
                                     <option value="Nippes">Nippes</option>
-                                    <option value="Nord">Nord</option>
+                                    <option value="Nord" selected>Nord</option>
                                     <option value="Nord-Est">Nord-Est</option>
                                     <option value="Nord-Ouest">Nord-Ouest</option>
                                     <option value="Ouest">Ouest</option>
@@ -214,17 +215,17 @@
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label>DEPART ON</label>
+                                <label><i class="fa-solid fa-calendar-day"></i> DEPART ON</label>
                                 <input type="date" id="input-date" class="form-input">
                             </div>
                             <div class="form-group">
-                                <label>PASSENGERS</label>
-                                <input type="number" class="form-input" placeholder="05" min="1">
+                                <label><i class="fa-solid fa-users"></i> PASSENGERS</label>
+                                <input type="number" id="input-passengers" class="form-input" value="1" min="1" placeholder="1" required>
                             </div>
                             <div class="form-group">
-                                <label>SITTING OPTION</label>
+                                <label><i class="fa-solid fa-chair"></i> SITTING OPTION</label>
                                 <select class="form-input">
-                                    <option>ANY</option>
+                                    <option selected>ANY</option>
                                     <option>WINDOW</option>
                                     <option>AISLE</option>
                                 </select>
@@ -232,10 +233,10 @@
                         </div>
                         <div class="form-row mt-3">
                             <div class="form-group">
-                                <label>SELECT HOURS</label>
+                                <label><i class="fa-solid fa-clock"></i> SELECT HOURS</label>
                                 <select class="form-input" id="input-time" required>
-                                    <option value="" disabled selected>8:00 AM - 4:00 PM</option>
-                                    <option>8:00 AM</option>
+                                    <option value="" disabled>SELECT HOUR</option>
+                                    <option selected>8:00 AM</option>
                                     <option>9:00 AM</option>
                                     <option>10:00 AM</option>
                                     <option>11:00 AM</option>
@@ -247,21 +248,24 @@
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label>BUS TYPE</label>
+                                <label><i class="fa-solid fa-bus"></i> BUS TYPE</label>
                                 <select class="form-input">
-                                    <option>ANY BUS</option>
+                                    <option selected>ANY BUS</option>
                                     <option>AC</option>
                                     <option>NON-AC</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label>MORE OPTION</label>
+                                <label><i class="fa-solid fa-sliders"></i> MORE OPTION</label>
                                 <select class="form-input">
-                                    <option>SELECT</option>
+                                    <option selected>NONE</option>
+                                    <option>WIFI & CHARGER</option>
+                                    <option>EXPRESS DIRECT</option>
+                                    <option>EXTRA LUGGAGE</option>
                                 </select>
                             </div>
                             <div class="form-group form-group-btn">
-                                <button type="submit" id="btn-search" class="btn-book-now">BOOK NOW !</button>
+                                <button type="submit" id="btn-search" class="btn-book-now"><i class="fa-solid fa-magnifying-glass"></i> BOOK NOW !</button>
                             </div>
                         </div>
                     </form>
@@ -507,6 +511,48 @@
                         </div>
                         <button type="submit" id="btn-charter-submit" class="btn-book-now mt-3">SUBMIT REQUEST</button>
                     </form>
+                </div>
+            </section>
+        </div>
+
+        <!-- ========================================================== -->
+        <!-- VIEW: MY BOOKINGS (Client Dashboard)                       -->
+        <!-- ========================================================== -->
+        <div id="view-my-bookings" class="hidden">
+            <section class="booking-section">
+                <div class="container">
+                    <div class="results-header">
+                        <h2 class="section-heading">MY BOOKINGS</h2>
+                        <button onclick="goHome()" class="btn-read-more-cyan" style="margin-top:0;">← Home</button>
+                    </div>
+
+                    <div class="client-profile-header" style="background:#f8fafc; padding:20px; border-radius:12px; margin-bottom:30px; border:1px solid #dde4ed; display:flex; align-items:center; gap:15px;">
+                        <div style="background:#e0f2fe; color:#00aeef; width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px;">
+                            <i class="fa-regular fa-user"></i>
+                        </div>
+                        <div>
+                            <h3 style="margin:0; font-size:16px; color:#0f172a; font-weight:700;">Passenger Dashboard</h3>
+                            <p style="margin:2px 0 0; color:#64748b; font-size:13px;" id="client-dashboard-info">Loading passenger info...</p>
+                        </div>
+                    </div>
+
+                    <div class="adm-table-wrap">
+                        <table class="adm-table">
+                            <thead>
+                                <tr>
+                                    <th>ROUTE</th>
+                                    <th>PRICE</th>
+                                    <th>SEAT</th>
+                                    <th>BOOKING CODE</th>
+                                    <th>DEPARTURE DATE</th>
+                                    <th>STATUS</th>
+                                </tr>
+                            </thead>
+                            <tbody id="my-bookings-body">
+                                <tr><td colspan="6" class="adm-empty">Loading your bookings...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </section>
         </div>
@@ -809,6 +855,30 @@
             transition: background .2s;
         }
         .btn-nav-admin:hover { background: #0094cc; }
+
+        /* ── Client nav button ── */
+        .btn-nav-bookings {
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 6px 14px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            cursor: pointer;
+            border-radius: 3px;
+            margin-right: 8px;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-nav-bookings:hover {
+            background: #fff;
+            color: #00aeef;
+            border-color: #fff;
+        }
     </style>
 
     <!-- ========================================================== -->

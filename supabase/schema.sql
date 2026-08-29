@@ -1,7 +1,3 @@
--- ============================================================
--- SISTÈM REZÈVASYON BIYÈ BIS - Supabase SQL Schema (100% relançable)
--- BisRezèv | CP Transport Express
--- ============================================================
 
 -- (1) Tables: on supprime si elles existent
 DROP TABLE IF EXISTS public.bookings CASCADE;

@@ -1,6 +1,3 @@
-// ============================================================
-// app.js — Classic Redesign (A&B Bus Tours Style) + Supabase
-// ============================================================
 
 const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -60,9 +57,9 @@ async function sendAdminEmail(templateId, params) {
 // CAROUSEL LOGIC
 // ============================================================
 const heroImages = [
-    'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80&w=1920', // Bus 1
-    'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?auto=format&fit=crop&q=80&w=1920', // Bus 2
-    'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&q=80&w=1920'  // Road
+    'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80&w=1920', 
+    'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?auto=format&fit=crop&q=80&w=1920', 
+    'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&q=80&w=1920'  
 ];
 let currentSlide = 0;
 
@@ -115,7 +112,7 @@ function generateBookingCode() {
 }
 
 function showView(viewId) {
-    const views = ['view-home', 'view-results', 'view-seatmap', 'view-form', 'view-confirmation', 'view-charter', 'view-admin'];
+    const views = ['view-home', 'view-results', 'view-seatmap', 'view-form', 'view-confirmation', 'view-charter', 'view-admin', 'view-my-bookings'];
     views.forEach(v => {
         if ($(v)) $(v).classList.add('hidden');
     });
@@ -128,6 +125,11 @@ function showView(viewId) {
     // Charger les données admin quand on ouvre la vue admin
     if (viewId === 'view-admin' && typeof loadAdminData === 'function') {
         loadAdminData();
+    }
+
+    // Charger les réservations du client connecté
+    if (viewId === 'view-my-bookings' && typeof loadMyBookings === 'function') {
+        loadMyBookings();
     }
 }
 
@@ -604,13 +606,23 @@ $('payment-form').addEventListener('submit', (e) => {
 });
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Empêcher de choisir une date passée
+    // Empêcher de choisir une date passée et preseleksyone denmen kòm valè default
     const dateInput = $('input-date');
     const charterDateInput = $('charter-date');
-    if (dateInput || charterDateInput) {
-        const today = new Date().toISOString().split('T')[0];
-        if (dateInput) dateInput.setAttribute('min', today);
-        if (charterDateInput) charterDateInput.setAttribute('min', today);
+    const today = new Date().toISOString().split('T')[0];
+    
+    if (dateInput) {
+        dateInput.setAttribute('min', today);
+        
+        // Pre-select tomorrow's date
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const tomorrowStr = tomorrow.toISOString().split('T')[0];
+        dateInput.value = tomorrowStr;
+    }
+    
+    if (charterDateInput) {
+        charterDateInput.setAttribute('min', today);
     }
 
     const { data: { session } } = await db.auth.getSession();
@@ -871,6 +883,94 @@ function aEsc(str) {
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;');
+}
+
+// ============================================================
+// CLIENT DASHBOARD LOGIC (Mes Réservations)
+// ============================================================
+async function loadMyBookings() {
+    const tbody = $('my-bookings-body');
+    if (!tbody) return;
+
+    if (!state.currentUser) {
+        tbody.innerHTML = `<tr><td colspan="6" class="adm-empty">Silvouplè konekte pou w ka wè rezèvasyon w yo.</td></tr>`;
+        return;
+    }
+
+    if ($('client-dashboard-info')) {
+        $('client-dashboard-info').innerHTML = `E-mail: <strong>${state.currentUser.email}</strong>`;
+    }
+
+    tbody.innerHTML = `<tr><td colspan="6" class="adm-empty">Chargement de vos réservations...</td></tr>`;
+
+    try {
+        const { data, error } = await db
+            .from('bookings')
+            .select('*, trips(origin, destination, departure_at, price, bus_company)')
+            .eq('user_id', state.currentUser.id)
+            .order('booked_at', { ascending: false });
+
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+            tbody.innerHTML = `<tr>
+                <td colspan="6" class="adm-empty">
+                    Ou pa gen okenn rezèvasyon ankò.<br>
+                    <button class="btn-read-more-cyan" style="margin-top:15px;" onclick="goHome(); document.getElementById('booking-section').scrollIntoView({behavior:'smooth'})">Rezève yon Bis kounye a</button>
+                </td>
+            </tr>`;
+            return;
+        }
+
+        tbody.innerHTML = data.map(b => {
+            const trip = b.trips || {};
+            const origin = aEsc(trip.origin || '?');
+            const dest = aEsc(trip.destination || '?');
+            const price = trip.price || 0;
+            const company = aEsc(trip.bus_company || '—');
+            
+            // Fallback pour le prix s'il n'est pas défini
+            let finalPrice = price;
+            if (finalPrice < 6000) {
+                const prices = {
+                    "Artibonite": 6000, "Centre": 7000, "Sud-Est": 8000, "Nippes": 8500,
+                    "Sud": 10000, "Nord-Ouest": 12000, "Nord": 14000, "Nord-Est": 15000, "Grand'Anse": 15000, "Ouest": 6000 
+                };
+                finalPrice = prices[trip.destination] || 6000;
+            }
+
+            const d = trip.departure_at ? new Date(trip.departure_at) : null;
+            const dateStr = d 
+                ? d.toLocaleDateString('fr-FR') + ' ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) 
+                : '—';
+            
+            const bStatus = b.status || 'pending';
+            const labels = {
+                pending: '⏳ En attente',
+                confirmed: '✅ Confirmé',
+                rejected: '❌ Annulé'
+            };
+
+            return `<tr>
+                <td>
+                    <span class="adm-route">${origin} ➔ ${dest}</span>
+                    <div style="font-size:11px;color:#888;margin-top:4px;">${company}</div>
+                </td>
+                <td style="font-weight:700;color:#00aeef;font-size:14px;">${finalPrice} HTG</td>
+                <td style="font-weight:700;font-size:14px;">${b.seat_number || '—'}</td>
+                <td><span class="adm-code">${aEsc(b.booking_code)}</span></td>
+                <td style="font-size:12px;color:#555;">${dateStr}</td>
+                <td>
+                    <span class="adm-badge ${bStatus}">
+                        ${labels[bStatus] || bStatus}
+                    </span>
+                </td>
+            </tr>`;
+        }).join('');
+    } catch (err) {
+        console.error('[Client Dashboard] Error loading bookings:', err);
+        tbody.innerHTML = `<tr><td colspan="6" class="adm-empty" style="color:red;">Erreur lors du chargement de vos réservations.</td></tr>`;
+    }
 }
 
 // ============================================================

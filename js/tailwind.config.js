@@ -1,10 +1,3 @@
-// ============================================================
-// tailwind.config.js — Konfigirasyon Tailwind CSS Custom
-// BisRezèv | Sistèm Rezèvasyon Biyè Bis
-// ============================================================
-// ENPÒTAN: Fichye sa a dwe chaje ANVAN css/style.css
-// nan HTML la: <script src="js/tailwind.config.js"></script>
-// ============================================================
 
 tailwind.config = {
     theme: {
